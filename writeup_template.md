@@ -53,9 +53,95 @@ Links | alpha(i-1) | a(i-1) | d(i-1) | theta(i)
 6->EE | 0 | 0 | 0.303 | 0
 
 #### 2. Using the DH parameter table you derived earlier, create individual transformation matrices about each joint. In addition, also generate a generalized homogeneous transform between base_link and gripper_link using only end-effector(gripper) pose.
+In order to create individual transformation matrices we are first going to create a reusable function based on the following equation: 
+
+![alt text][misc_images/dh-transform-matrix.png]
+
+The code below creates the full transform to the End-effector gripper pose from the fixed base link. Substituted DH parameters into the Transformation Matrix function, for each individual length between links and then multiplied them all together to find the full transformation from base to end-effector(T0_EE).
+
+   def TF_Matrix(alpha, a, d, q):
+           TF = Matrix([[            cos(q),           -sin(q),           0,             a],
+                        [ sin(q)*cos(alpha), cos(q)*cos(alpha), -sin(alpha), -sin(alpha)*d],
+                        [ sin(q)*sin(alpha), cos(q)*sin(alpha),  cos(alpha),  cos(alpha)*d],
+                        [                 0,                 0,           0,             1]])
+           return TF
+
+        #
+        # Create individual transformation matrices
+        T0_1 = Trans_Matrix(alpha0, a0, d1, q1).subs(DH)
+        T1_2 = Trans_Matrix(alpha1, a1, d2, q2).subs(DH)
+        T2_3 = Trans_Matrix(alpha2, a2, d3, q3).subs(DH)
+        T3_4 = Trans_Matrix(alpha3, a3, d4, q4).subs(DH)
+        T4_5 = Trans_Matrix(alpha4, a4, d5, q5).subs(DH)
+        T5_6 = Trans_Matrix(alpha5, a5, d6, q6).subs(DH)
+        T6_EE = Trans_Matrix(alpha6, a6, d7, q7).subs(DH)
+
+        T0_EE = T0_1 * T1_2 * T2_3 * T3_4 * T4_5 * T5_6 * T6_EE
+
+        #Set Roll Pitch and Yaw to end-effector postion
+        (roll, pitch, yaw) = tf.transformations.euler_from_quaternion(
+            [req.poses[x].orientation.x, req.poses[x].orientation.y,
+               req.poses[x].orientation.z, req.poses[x].orientation.w])
+
+        # Create Rotation Matrices
+        Roll_rot = Matrix([[ 1,         0,          0],
+                         [ 0, cos(r), -sin(r)],
+                         [ 0, sin(r), cos(r)]])
+
+        Pitch_rot = Matrix([[ cos(p),  0, sin(p)],
+	                       [          0,  1,          0],
+	                       [-sin(p),  0, cos(p)]])
+
+        Yaw_rot = Matrix([[ cos(y), -sin(y), 0],
+	                    [ sin(y),  cos(y), 0],
+	                    [        0,         0, 1]])
+
+        EE_rot = Yaw_rot * Pitch_rot * Roll_rot
+
+        #Numerically Evaluate transforms to compare with tf_echo
+        # print("T0_1 = ",T0_1 = Trans_Matrix(alpha0, a0, d1, q1).subs(DH_test))
+        # print("T1_2 = ",T1_2 = Trans_Matrix(alpha1, a1, d2, q2).subs(DH_test))
+        # print("T2_3 = ",T2_3 = Trans_Matrix(alpha2, a2, d3, q3).subs(DH_test))
+        # print("T3_4 = ",T3_4 = Trans_Matrix(alpha3, a3, d5, q4).subs(DH_test))
+        # print("T4_5 = ",T4_5 = Trans_Matrix(alpha4, a4, d5, q5).subs(DH_test))
+        # print("T5_6 = ",T5_6 = Trans_Matrix(alpha5, a5, d6, q6).subs(DH_test))
+        # print("T6_G = ",T6_G = Trans_Matrix(alpha6, a6, d7, q7).subs(DH_test))
+
+        # Compensate for rotation discrepancy between DH parameters and Gazebo
+        # calculate error between urdf and dh
+        #rotate 180 degrees around z
+        R_z = Yaw_rot.subs(y, radians(180))
+        #Rotate 90 degrees around y
+        R_y = Pitch_rot.subs(p, radians(-90))
+
+        R_error = simplify(R_z * R_y)
+
+        EE_rot = EE_rot * R_error
+
+        EE_rot = EE_rot.subs({'r': roll, 'p': pitch, 'y': yaw})
+
+        #
+        # Extract rotation matrices from the transformation matrices
+        # End effector positions:
+        px = req.poses[x].position.x
+        py = req.poses[x].position.y
+        pz = req.poses[x].position.z
+        
+#### 3. Decouple Inverse Kinematics problem into Inverse Position Kinematics and inverse Orientation Kinematics; doing so derive the equations to calculate all individual joint angles.        
+        
+Wrist center(WC) is created with the following function using joint 5.
+       
+        # Wrist center calculation  
+        WC = Matrix([px, py, pz]) - (DH[d7]*1.23) * EE_rot[:,2]
+        
+Joints 1-3 are used in order to position the WC correctly which is inverse position kinematics. They are called Theta 1-3 in the code. Theta 1 is calculated using WC array. 
+
+        theta1 = atan2(WC[1], WC[0]) # Equation = atan2(WCy, WCx)
+
+We get Theta2 with SSS triangle constructed using joint 2, joint 3, and WC.
+![alt text][misc_images/angle.png]
 
 
-#### 3. Decouple Inverse Kinematics problem into Inverse Position Kinematics and inverse Orientation Kinematics; doing so derive the equations to calculate all individual joint angles.
 
 And here's where you can draw out and show your math for the derivation of your theta angles. 
 
