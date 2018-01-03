@@ -155,6 +155,7 @@ The wrist center is calculated from the position and orientation of the end effe
 
 The file IK_server.py which I submitted could place 9/10 objects in the bin. The collection and dropping of objects are shown below.
 ![alt text][misc_images/pick_one.png]
+
 ![alt text][misc_images/saved_9.png]
 
 
