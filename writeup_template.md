@@ -40,7 +40,7 @@ d(i-1) are link offsets , signed distance from  x(i-1) to x(i),measured along z(
 theta(i) are joint angles, angle between  x(i-1) to x(i) measured about z(i). 
 
 Model to derive DH parameters.
-![alt text][/misc_images/diagram.png]
+![alt text](https://github.com/GirijaB/RoboND-Kinematics-Project/blob/master/misc_images/diagram.png)
 
 Links | alpha(i-1) | a(i-1) | d(i-1) | theta(i)
 --- | --- | --- | --- | ---
@@ -55,7 +55,7 @@ Links | alpha(i-1) | a(i-1) | d(i-1) | theta(i)
 #### 2. Using the DH parameter table you derived earlier, create individual transformation matrices about each joint. In addition, also generate a generalized homogeneous transform between base_link and gripper_link using only end-effector(gripper) pose.
 In order to create individual transformation matrices we are first going to create a reusable function based on the following equation: 
 
-![alt text][/misc_images/dh-transform-matrix.png]
+![alt text](https://github.com/GirijaB/RoboND-Kinematics-Project/blob/master/misc_images/dh-transform-matrix.png)
 
 The code below creates the full transform to the End-effector gripper pose from the fixed base link. Substituted DH parameters into the Transformation Matrix function, for each individual length between links and then multiplied them all together to find the full transformation from base to end-effector(T0_EE).
 
@@ -139,7 +139,7 @@ Joints 1-3 are used in order to position the WC correctly which is inverse posit
         theta1 = atan2(WC[1], WC[0]) # Equation = atan2(WCy, WCx)
 
 We get Theta2 with SSS triangle constructed using joint 2, joint 3, and WC.
-![alt text][misc_images/angle.png]
+![alt text](https://github.com/GirijaB/RoboND-Kinematics-Project/blob/master/misc_images/angle.png)
 
 	theta2 = pi /2 - angle_a - atan2(WC[2] - 0.75, sqrt(WC[0] * WC[0] + WC[1] * WC[1]) - 0.35)
 
@@ -154,8 +154,8 @@ The code starts with the DH parameters symbols and the values calculated from th
 The wrist center is calculated from the position and orientation of the end effector and from the Rotation matrix of joint0_joint3 and the Rotation matrix of the end effector are compared to the R3_6 matrix and the values of theta3_6 are calculated. The end effector is fixed to the joint 6 and the orientation of the end effector depends on the movement of the joints 4,5,6. 
 
 The file IK_server.py which I submitted could place 9/10 objects in the bin. The collection and dropping of objects are shown below.
-![alt text][misc_images/pick_one.png]
+![alt text](https://github.com/GirijaB/RoboND-Kinematics-Project/blob/master/misc_images/pick_one.png)
 
-![alt text][misc_images/saved_9.png]
+![alt text](https://github.com/GirijaB/RoboND-Kinematics-Project/blob/master/misc_images/saved_9.png)
 
 
