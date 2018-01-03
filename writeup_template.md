@@ -14,9 +14,9 @@
 
 [//]: # (Image References)
 
-[image1]: ./misc_images/misc1.png
-[image2]: ./misc_images/misc3.png
-[image3]: ./misc_images/misc2.png
+[image1]: ./misc_images/diagram.png
+[image2]: ./misc_images/dh-transform-matrix.png
+[image3]: ./misc_images/angle.png
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/972/view) Points
 ### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
@@ -40,7 +40,7 @@ d(i-1) are link offsets , signed distance from  x(i-1) to x(i),measured along z(
 theta(i) are joint angles, angle between  x(i-1) to x(i) measured about z(i). 
 
 Model to derive DH parameters.
-![alt text][misc_images/diagram.png]
+![alt text][/misc_images/diagram.png]
 
 Links | alpha(i-1) | a(i-1) | d(i-1) | theta(i)
 --- | --- | --- | --- | ---
@@ -55,7 +55,7 @@ Links | alpha(i-1) | a(i-1) | d(i-1) | theta(i)
 #### 2. Using the DH parameter table you derived earlier, create individual transformation matrices about each joint. In addition, also generate a generalized homogeneous transform between base_link and gripper_link using only end-effector(gripper) pose.
 In order to create individual transformation matrices we are first going to create a reusable function based on the following equation: 
 
-![alt text][misc_images/dh-transform-matrix.png]
+![alt text][/misc_images/dh-transform-matrix.png]
 
 The code below creates the full transform to the End-effector gripper pose from the fixed base link. Substituted DH parameters into the Transformation Matrix function, for each individual length between links and then multiplied them all together to find the full transformation from base to end-effector(T0_EE).
 
