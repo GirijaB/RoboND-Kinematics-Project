@@ -1,7 +1,4 @@
 ## Project: Kinematics Pick & Place
-### Writeup Template: You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
-
----
 
 
 **Steps to complete the project:**  
@@ -34,21 +31,28 @@ You're reading it!
 ### Kinematic Analysis
 #### 1. Run the forward_kinematics demo and evaluate the kr210.urdf.xacro file to perform kinematic analysis of Kuka KR210 robot and derive its DH parameters.
 
-Here is an example of how to include an image in your writeup.
+I first ran the demo by following the instructions. Manipulated the joints in Rviz to better understand the links of the robot arm and how the rotations affect each other.
+From the kr201.urdf.xacro, we can get the DH parameters of the kuka arm and the pose of the robot when all the joint variables are equal to zero. The arm is referenced in the xz frame. The number of joints in arm are numbered from 1 to 6 and the no of links are numbered from 0-6.
+The values we get from the file are alpha0-6, a0-6, d1-7 
+alpha(i-1) are twist angles between z(i-1) and z(i) measured about x(i-1).
+a(i-1) are link lengths ,distance from z(i-1) and z(i) measured along  x(i-1) where x(i-1) is perpendicular to both  z(i-1) and z(i).
+d(i-1) are link offsets , signed distance from  x(i-1) to x(i),measured along z(i).
+theta(i) are joint angles, angle between  x(i-1) to x(i) measured about z(i). 
 
-![alt text][image1]
-
-#### 2. Using the DH parameter table you derived earlier, create individual transformation matrices about each joint. In addition, also generate a generalized homogeneous transform between base_link and gripper_link using only end-effector(gripper) pose.
+Model to derive DH parameters.
+![alt text][misc_images/diagram.png]
 
 Links | alpha(i-1) | a(i-1) | d(i-1) | theta(i)
 --- | --- | --- | --- | ---
-0->1 | 0 | 0 | L1 | qi
-1->2 | - pi/2 | L2 | 0 | -pi/2 + q2
-2->3 | 0 | 0 | 0 | 0
-3->4 |  0 | 0 | 0 | 0
-4->5 | 0 | 0 | 0 | 0
-5->6 | 0 | 0 | 0 | 0
-6->EE | 0 | 0 | 0 | 0
+0->1 | 0 | 0 | 0.75 | q1
+1->2 | - pi/2 | 0.35	 | 0 | -pi/2 + q2
+2->3 | 0 | 1.25	 | 0 | q3
+3->4 |  - pi/2| -0.054 | 1.5	 | q4
+4->5 |  pi/2 | 0 | 0 | q5
+5->6 | - pi/2 | 0 | 0 | q6
+6->EE | 0 | 0 | 0.303 | 0
+
+#### 2. Using the DH parameter table you derived earlier, create individual transformation matrices about each joint. In addition, also generate a generalized homogeneous transform between base_link and gripper_link using only end-effector(gripper) pose.
 
 
 #### 3. Decouple Inverse Kinematics problem into Inverse Position Kinematics and inverse Orientation Kinematics; doing so derive the equations to calculate all individual joint angles.
