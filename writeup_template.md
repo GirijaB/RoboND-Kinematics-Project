@@ -141,21 +141,20 @@ Joints 1-3 are used in order to position the WC correctly which is inverse posit
 We get Theta2 with SSS triangle constructed using joint 2, joint 3, and WC.
 ![alt text][misc_images/angle.png]
 
+	theta2 = pi /2 - angle_a - atan2(WC[2] - 0.75, sqrt(WC[0] * WC[0] + WC[1] * WC[1]) - 0.35)
 
 
-And here's where you can draw out and show your math for the derivation of your theta angles. 
-
-![alt text][image2]
 
 ### Project Implementation
 
 #### 1. Fill in the `IK_server.py` file with properly commented python code for calculating Inverse Kinematics based on previously performed Kinematic Analysis. Your code must guide the robot to successfully complete 8/10 pick and place cycles. Briefly discuss the code you implemented and your results. 
 
+The code starts with the DH parameters symbols and the values calculated from the URDF file. Using those values the transformation matrix from joint 0 which is fixed to the joint 7 are calculated with respect to the previous joint except for joint 0
+  
+The wrist center is calculated from the position and orientation of the end effector and from the Rotation matrix of joint0_joint3 and the Rotation matrix of the end effector are compared to the R3_6 matrix and the values of theta3_6 are calculated. The end effector is fixed to the joint 6 and the orientation of the end effector depends on the movement of the joints 4,5,6. 
 
-Here I'll talk about the code, what techniques I used, what worked and why, where the implementation might fail and how I might improve it if I were going to pursue this project further.  
-
-
-And just for fun, another example image:
-![alt text][image3]
+The file IK_server.py which I submitted could place 9/10 objects in the bin. The collection and dropping of objects are shown below.
+![alt text][misc_images/pick_one.png]
+![alt text][misc_images/saved_9.png]
 
 
