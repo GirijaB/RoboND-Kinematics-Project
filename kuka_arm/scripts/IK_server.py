@@ -64,26 +64,17 @@ def handle_calculate_IK(req):
         T0_EE = T0_1 * T1_2 * T2_3 * T3_4 * T4_5 * T5_6 * T6_EE
 
 
-        r, p, y = symbols('r p y')
-            ROT_x = Matrix([[1,     0,       0],
-                            [0,cos(r), -sin(r)],
-                            [0,sin(r), cos(r)]]) #ROLL
+        
 
-            ROT_y = Matrix([[cos(p), 0,sin(p)],
-                            [0,      1,     0],
-                            [-sin(p),0,cos(p)]]) #PITCH
+        ###We can get the coordinates of the wrist center i.e., the position and orientation of it. 
 
-            ROT_z = Matrix([[cos(y),-sin(y),    0],
-                            [sin(y), cos(y),    0],
-                            [0,          0,     1]]) #YAW
+		###From the gazebo environment, the end effector position and orientation are calculated which are x,y,z coordinates and the roll, pitch, yaw which are orientation of the
+		###end effector.The Rotation matrix of the end effector is calculated by the x,y,z rotations. There is a difference in the orientation of the gripper or end effector from  
+        ####with respect to the joint reference frame. So, the end effector is aligned with the joint reference frames by rotating the z axis by 180 degrees and y axis by -90 degrees. 
+		####The correction is then applied to the Rotation matrix we get from the end effector orientation and then the wrist center is calculated. 
 
-            ROT_EE = ROT_z * ROT_y * ROT_x
 
-            Rot_Error = ROT_z.subs(y, radians(180)) * ROT_y.subs(p, radians(-90))
 
-            ROT_EE = ROT_EE * Rot_Error
-
-        ###
 
         # Initialize service response
         joint_trajectory_list = []
@@ -101,19 +92,33 @@ def handle_calculate_IK(req):
             (roll, pitch, yaw) = tf.transformations.euler_from_quaternion(
                 [req.poses[x].orientation.x, req.poses[x].orientation.y,
                     req.poses[x].orientation.z, req.poses[x].orientation.w])
+					
+			r, p, y = symbols('r p y')
+            ROT_x = Matrix([[1,     0,       0],
+                            [0,cos(r), -sin(r)],
+                            [0,sin(r), cos(r)]]) #ROLL
 
-            ### Your IK code here
-	    # Compensate for rotation discrepancy between DH parameters and Gazebo
-	    
+            ROT_y = Matrix([[cos(p), 0,sin(p)],
+                            [0,      1,     0],
+                            [-sin(p),0,cos(p)]]) #PITCH
+
+            ROT_z = Matrix([[cos(y),-sin(y),    0],
+                            [sin(y), cos(y),    0],
+                            [0,          0,     1]]) #YAW
+
+            ROT_EE = ROT_z * ROT_y * ROT_x
+
+            Rot_Error = ROT_z.subs(y, radians(180)) * ROT_y.subs(p, radians(-90))
+
             ROT_EE = ROT_EE.subs({'r' : roll, 'p' : pitch, 'y': yaw})
+			
+			ROT_EE = ROT_EE * Rot_Error	
 
             EE = Matrix([[px],
                          [py],
                          [pz]])
+						 
             WC = EE -(0.303)* ROT_EE[:,2]
-
-            #Calculate joint angles using geometric IK method
-            theta1 = atan2(WC[1],WC[0])
 
             #SSS triangle for theta2 and theta3
             side_a = 1.501
@@ -123,17 +128,30 @@ def handle_calculate_IK(req):
             angle_a = acos((side_b *side_b +side_c * side_c - side_a * side_a) / (2 * side_b * side_c))
             angle_b = acos((side_a *side_a +side_c * side_c - side_b * side_b) / (2 * side_a * side_c))
             angle_c = acos((side_a *side_a +side_b * side_b - side_c * side_c) / (2 * side_a * side_b))
+			
+			#Calculate joint angles using geometric IK method
+			#After the calculation of wrist center, we calculate the values of theta1, 2, 3, 4, 5 ,6
+			#Theta 2, and Theta 3 was solved by using the example from Term 3. 2. 19 Inverse Kinematics Example. Theta 2 are part of the right angle with betta and eta. Betta and
+			#eta can be found reversing cosine law of the triangle with joint 3, 5, 2 and tangent of x and y coordinate of joint 5, respectivly. Theta 3 is the angle from the Z axis
+			#of joint 3 to the Z axis of joint2, which is the part of 180 degree combined with gamma and delta. two angles gamma and delta can be found by the cosine law of the 
+			#triangle with joint 3, 5, 2 and the a sine of a3 and distance from joint 3 to 5, respectively.
+            theta1 = atan2(WC[1],WC[0])
 
             theta2 = pi /2 - angle_a -atan2(WC[2] - 0.75, sqrt(WC[0] * WC[0] +WC[1] *WC[1]) - 0.35)
             theta3 = pi /2 - (angle_b + 0.036)
 
-            R0_3 = T0_1[0:3,0:3] * T1_2[0:3,0:3] * T2_3[0:3,0:3]
-            R0_3 = R0_3.evalf(subs = {q1: theta1, q2: theta2, q3: theta3}) 
-            R3_6 = R0_3.inv("LU") * ROT_EE
+            RO_3 = TO_1[0:3,0:3] + TO_2[0:3,0:3] + TO_3[0:3,0:3]
+			RO_3 = RO_3.eval(subs={q1: theta1, q2: theta2, q3: theta3})
+            R3_6 = R0_3.T * ROT_EE
 
-            theta4 = atan2(R3_6[2,2], -R3_6[0,2])
-            theta5 = atan2(sqrt(R3_6[0,2]*R3_6[0,2] + R3_6[2,2]*R3_6[2,2]),R3_6[1,2])
-            theta6 = atan2(-R3_6[1,1], -R3_6[1,0])
+			# Euler angles from rotation matrix
+			theta5 = atan2(sqrt(R3_6[0,2]*R3_6[0,2] + R3_6[2,2] * R3_6[2,2]), R3_6[1,2])
+			if sin(theta5) < 0:
+				theta4 = atan2(-R3_6[2,2], R3_6[0,2])
+				theta6 = atan2(R3_6[1,1], -R3_6[1,0])
+			else:
+				theta4 = atan2(R3_6[2,2], -R3_6[0,2])
+				theta6 = atan2(-R3_6[1,1], R3_6[1,0])
 
             # Populate response for the IK request
             # In the next line replace theta1,theta2...,theta6 by your joint angle variables
